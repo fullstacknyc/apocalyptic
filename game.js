@@ -25,6 +25,11 @@ let zombies = [];
 let bullets = [];
 let zombieRespawnTimer = 0;
 
+// Constants for Fog of War and vision cone
+const FOG_OF_WAR_OPACITY = 0.8;
+const FOV_RADIUS = 300;  // Increased Field of View radius for more realistic range
+const FOV_ANGLE = Math.PI / 3;  // 60 degrees of FOV
+
 function spawnZombie() {
   const edge = Math.floor(Math.random() * 4);
   let x, y;
@@ -113,17 +118,21 @@ function moveZombies() {
 
 function drawZombies() {
   zombies.forEach((z) => {
-    ctx.fillStyle = z.health > 0 ? (z.state === "aggro" ? "#228822" : "green") : "black";
-    ctx.fillRect(z.x, z.y, z.size, z.size);
+    if (isZombieInFieldOfView(z)) {  // Only draw zombies within the vision cone
+      ctx.fillStyle = z.health > 0 ? (z.state === "aggro" ? "#228822" : "green") : "black";
+      ctx.fillRect(z.x, z.y, z.size, z.size);
+    }
   });
 }
 
 function drawZombiesHealth() {
   zombies.forEach((z) => {
-    ctx.fillStyle = "red";
-    ctx.fillRect(z.x, z.y - 10, Math.max(z.health, 0) * 0.8, 5);
-    ctx.strokeStyle = "black";
-    ctx.strokeRect(z.x, z.y - 10, 40, 5);
+    if (isZombieInFieldOfView(z)) {
+      ctx.fillStyle = "red";
+      ctx.fillRect(z.x, z.y - 10, Math.max(z.health, 0) * 0.8, 5);
+      ctx.strokeStyle = "black";
+      ctx.strokeRect(z.x, z.y - 10, 40, 5);
+    }
   });
 }
 
@@ -197,12 +206,48 @@ function removeDeadZombies() {
   zombies = zombies.filter(z => z.health > 0);
 }
 
+// Fog of War rendering
+function drawFogOfWar() {
+  // Full canvas darkness overlay
+  ctx.fillStyle = `rgba(0, 0, 0, ${FOG_OF_WAR_OPACITY})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Calculate the angle and distance for the vision cone
+  const angle = Math.atan2(mouseY - playerY, mouseX - playerX);
+  ctx.globalCompositeOperation = "destination-out"; // Remove from the fog area
+
+  // Create the vision cone by cutting a sector from the dark overlay
+  ctx.beginPath();
+  ctx.moveTo(playerX + playerSize / 2, playerY + playerSize / 2);
+  ctx.arc(playerX + playerSize / 2, playerY + playerSize / 2, FOV_RADIUS, angle - FOV_ANGLE / 2, angle + FOV_ANGLE / 2);
+  ctx.lineTo(playerX + playerSize / 2, playerY + playerSize / 2);
+  ctx.fill();
+  ctx.globalCompositeOperation = "source-over"; // Reset the composite mode
+}
+
+function isZombieInFieldOfView(z) {
+  const dx = z.x - playerX;
+  const dy = z.y - playerY;
+  const dist = Math.hypot(dx, dy);
+  
+  if (dist > FOV_RADIUS) return false;  // Outside the FOV radius
+
+  // Check if the zombie is within the vision cone
+  const angleToZombie = Math.atan2(dy, dx);
+  const angleToPlayer = Math.atan2(mouseY - playerY, mouseX - playerX);
+  const angleDifference = Math.abs(angleToZombie - angleToPlayer);
+
+  return angleDifference < FOV_ANGLE / 2;
+}
+
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   updatePlayerPosition();
   moveZombies();
   updateBullets();
+
+  drawFogOfWar();  // Draw the fog of war over the whole screen
 
   drawPlayer();
   drawPlayerHealth();
