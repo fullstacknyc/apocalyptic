@@ -3,15 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>myGame</title>
-    <head>
-        <style>
-            body {
-                cursor: none;
-            }
-        </style>
-    </head>
+    <title>Zombie Survival</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>
+        body {
+            cursor: none;
+            background: url('background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            outline: none;
+        }
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            z-index: 1000;
+        }
+    </style>
+    <!-- Preload assets -->
+    <link rel="preload" href="attack.mp3" as="audio">
+    <link rel="preload" href="zombie-death.mp3" as="audio">
+    <link rel="preload" href="switch-weapon.mp3" as="audio">
+    <link rel="preload" href="health-pack.mp3" as="audio">
+    <audio id="attack-sound" src="attack.mp3"></audio>
+    <audio id="zombie-death-sound" src="zombie-death.mp3"></audio>
+    <audio id="switch-weapon-sound" src="switch-weapon.mp3"></audio>
+    <audio id="health-pack-sound" src="health-pack.mp3"></audio>
+</head>
 <body>
+    <div id="loading-screen">Loading Zombie Survival...</div>
+    <script>
+        window.addEventListener('load', () => {
+            document.getElementById('loading-screen').style.display = 'none';
+        });
+    </script>
     <script src="game.js"></script>
 </body>
 </html>
